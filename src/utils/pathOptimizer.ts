@@ -11,6 +11,14 @@
 
 import { getCurvePoint } from './math';
 
+// Constants
+const FIELD_SIZE = 144; // Field dimensions in inches (144x144)
+const PARALLEL_THRESHOLD = 1e-10; // Threshold for determining if lines are parallel
+const SMOOTHING_SCALE = 10; // Scale factor for optimization quality to smoothing
+const SMOOTHING_MULTIPLIER = 0.1; // Base smoothing strength multiplier
+const MIN_SAMPLES_PER_SEGMENT = 10; // Minimum sampling points per path segment
+const SAMPLES_QUALITY_MULTIPLIER = 10; // Multiplier for optimization quality to sample count
+
 interface OptimizationResult {
   success: boolean;
   optimizedLines?: Line[];
@@ -161,7 +169,7 @@ function lineSegmentsIntersect(
 ): boolean {
   const det = (p2.x - p1.x) * (p4.y - p3.y) - (p4.x - p3.x) * (p2.y - p1.y);
   
-  if (Math.abs(det) < 1e-10) {
+  if (Math.abs(det) < PARALLEL_THRESHOLD) {
     return false; // Parallel or coincident
   }
   
@@ -250,7 +258,7 @@ function checkCollision(
   );
   
   for (const corner of robotCorners) {
-    if (corner.x < 0 || corner.x > 144 || corner.y < 0 || corner.y > 144) {
+    if (corner.x < 0 || corner.x > FIELD_SIZE || corner.y < 0 || corner.y > FIELD_SIZE) {
       return true; // Out of bounds
     }
   }
@@ -292,7 +300,7 @@ function smoothPath(
   
   // Apply smoothing based on optimization quality
   // Higher quality = more aggressive smoothing
-  const smoothingFactor = settings.optimizationQuality / 10;
+  const smoothingFactor = settings.optimizationQuality / SMOOTHING_SCALE;
   
   // Clone control points
   const optimized = segment.controlPoints.map(cp => ({ ...cp }));
@@ -306,8 +314,8 @@ function smoothPath(
     
     for (let i = 0; i < optimized.length; i++) {
       const cp = optimized[i];
-      cp.x = cp.x + (mid.x - cp.x) * smoothingFactor * 0.1;
-      cp.y = cp.y + (mid.y - cp.y) * smoothingFactor * 0.1;
+      cp.x = cp.x + (mid.x - cp.x) * smoothingFactor * SMOOTHING_MULTIPLIER;
+      cp.y = cp.y + (mid.y - cp.y) * smoothingFactor * SMOOTHING_MULTIPLIER;
     }
   }
   
@@ -336,7 +344,7 @@ export function optimizePath(
     let currentPoint = startPoint;
     
     // Sample density based on optimization quality (1-10)
-    const samplesPerSegment = Math.max(10, settings.optimizationQuality * 10);
+    const samplesPerSegment = Math.max(MIN_SAMPLES_PER_SEGMENT, settings.optimizationQuality * SAMPLES_QUALITY_MULTIPLIER);
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
