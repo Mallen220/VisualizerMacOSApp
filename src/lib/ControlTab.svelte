@@ -76,6 +76,11 @@
   let optimizationStatus: 'idle' | 'optimizing' | 'success' | 'error' = 'idle';
   let optimizationMessage = '';
 
+  /**
+   * Handle path optimization - smooths control points while checking for collisions
+   * Note: Runs synchronously since path calculations are typically fast (< 100ms)
+   * For very complex paths with many segments, consider using Web Worker if performance becomes an issue
+   */
   function handleOptimizePath() {
     optimizationStatus = 'optimizing';
     optimizationMessage = 'Optimizing path...';
@@ -100,6 +105,10 @@
     }
   }
 
+  /**
+   * Handle path validation - checks for collisions without modifying the path
+   * Note: Runs synchronously since validation is typically fast (< 100ms)
+   */
   function handleValidatePath() {
     optimizationStatus = 'optimizing';
     optimizationMessage = 'Validating path...';

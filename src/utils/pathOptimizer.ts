@@ -211,6 +211,7 @@ function sampleBezierCurve(
  * @param prevPoint Previous point for tangent calculation
  * @param nextPoint Next point for tangent calculation  
  * @param t Optional parameter for linear interpolation (0-1)
+ * @returns Heading angle in degrees
  */
 function calculateHeading(
   point: Point, 
@@ -331,6 +332,16 @@ function smoothPath(
 /**
  * Check all path segments for collisions
  * Internal helper function used by both optimizePath and validatePath
+ * 
+ * Samples each path segment at multiple points and checks for:
+ * - Robot-obstacle intersections using separating axis theorem
+ * - Field bounds violations (0-144 inch field)
+ * 
+ * @param startPoint Starting point of the path
+ * @param lines Path segments to check
+ * @param shapes Obstacles to avoid
+ * @param settings Robot parameters including dimensions and safety margin
+ * @returns Object with success flag and optional error message containing collision location
  */
 function checkPathCollisions(
   startPoint: Point,
